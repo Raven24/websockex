@@ -10,12 +10,15 @@ defmodule WebSockex.Conn do
   @socket_connect_timeout_default 6000
   @socket_recv_timeout_default 5000
 
+  @http_verb "GET"
+
   defstruct conn_mod: nil,
             host: nil,
             port: nil,
             path: nil,
             query: nil,
             extra_headers: [],
+            http_verb: @http_verb,
             transport: nil,
             socket: nil,
             socket_connect_timeout: @socket_connect_timeout_default,
@@ -65,6 +68,7 @@ defmodule WebSockex.Conn do
           path: String.t(),
           query: String.t() | nil,
           extra_headers: [header],
+          http_verb: String.t(),
           transport: transport,
           socket: socket | nil,
           socket_connect_timeout: non_neg_integer,
@@ -89,6 +93,7 @@ defmodule WebSockex.Conn do
       query: uri.query,
       conn_mod: mod,
       transport: transport(mod),
+      http_verb: Keyword.get(opts, :http_verb, @http_verb),
       extra_headers: Keyword.get(opts, :extra_headers, []),
       cacerts: Keyword.get(opts, :cacerts, nil),
       insecure: Keyword.get(opts, :insecure, true),
@@ -213,7 +218,7 @@ defmodule WebSockex.Conn do
 
     # Build the request
     request =
-      ["GET #{build_full_path(conn)} HTTP/1.1" | headers]
+      ["#{conn.http_verb} #{build_full_path(conn)} HTTP/1.1" | headers]
       |> Enum.join("\r\n")
 
     {:ok, request <> "\r\n\r\n"}
